@@ -2,6 +2,8 @@
 
 **Display:** [VIEWESMART UEDX48480021-MD80ESP32 – 2,1" Round Touch Knob Display](https://github.com/VIEWESMART/UEDX48480021-MD80ESP32-2.1inch-Touch-Knob-Display)
 
+![Display in Betrieb](images/display.jpg)
+
 ---
 
 ## Deutsch

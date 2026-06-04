@@ -28,7 +28,7 @@ Folgende Werte müssen vor dem Flashen angepasst werden:
 |---|---|
 | `!secret wifi_ssid` / `!secret wifi_password` | WLAN-Zugangsdaten in `secrets.yaml` |
 | `media_player.schlafzimmer` | HA-Entität des LMS-Players (alle Vorkommen ersetzen) |
-| `38:18:2b:72:85:cc` | MAC-Adresse des LMS-Spielers in der Cover-Art-URL |
+| `XX:XX:XX:XX:XX:XX` | MAC-Adresse des LMS-Spielers in der Cover-Art-URL |
 | `button.none_voreinstellung_1` … `_6` | HA-Entitäten der LMS-Favoriten-Buttons |
 | `api.encryption.key` | Eigenen API-Key generieren (`esphome generate-key`) |
 | `ota.password` | Eigenes OTA-Passwort setzen |
@@ -66,7 +66,7 @@ The following values must be adjusted before flashing:
 |---|---|
 | `!secret wifi_ssid` / `!secret wifi_password` | Wi-Fi credentials in `secrets.yaml` |
 | `media_player.schlafzimmer` | HA entity of your LMS media player (replace all occurrences) |
-| `38:18:2b:72:85:cc` | MAC address of your LMS player in the cover art URL |
+| `XX:XX:XX:XX:XX:XX` | MAC address of your LMS player in the cover art URL |
 | `button.none_voreinstellung_1` … `_6` | HA entities of your LMS preset buttons |
 | `api.encryption.key` | Generate your own key (`esphome generate-key`) |
 | `ota.password` | Set your own OTA password |

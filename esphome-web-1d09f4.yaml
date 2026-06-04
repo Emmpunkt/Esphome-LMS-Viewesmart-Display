@@ -19,18 +19,13 @@ esphome:
       - lambda: |-
           lv_obj_set_style_anim_time(id(label_title),  5000, 0);
           lv_obj_set_style_anim_time(id(label_artist), 5000, 0);
-      - delay: 15000ms
-      - lambda: id(boot_ready) = true;
-      - script.execute: download_cover
 
 esp32:
   board: esp32-s3-devkitc-1
   framework:
     type: esp-idf
     sdkconfig_options:
-      CONFIG_LCD_RGB_BOUNCE_BUFFER_SIZE: "9600"
-      CONFIG_SPIRAM_FETCH_INSTRUCTIONS: y
-      CONFIG_SPIRAM_RODATA: y
+      CONFIG_LCD_RGB_BOUNCE_BUFFER_SIZE: "28800"
       CONFIG_FREERTOS_USE_TICKLESS_IDLE: "n"
       CONFIG_ESP_MAIN_TASK_STACK_SIZE: "16384"
       CONFIG_LWIP_TCPIP_TASK_STACK_SIZE: "6144"
@@ -81,7 +76,7 @@ http_request:
 
 online_image:
   - id: cover_image
-    url: "http://homeassistant.local:9000/music/current/cover_480x480_m.jpg?player=XX:XX:XX:XX:XX:XX"
+    url: "http://homeassistant.local:9000/music/current/cover_240x240_m.jpg?player=XX:XX:XX:XX:XX:XX"
     format: JPEG
     type: RGB565
     buffer_size: 65536
@@ -92,6 +87,7 @@ online_image:
         - lambda: |-
             auto * dsc = id(cover_image).get_lv_image_dsc();
             lv_image_set_src(id(img_cover), dsc);
+            lv_image_set_inner_align(id(img_cover), LV_IMAGE_ALIGN_STRETCH);
             lv_obj_set_style_opa(id(img_cover), LV_OPA_COVER, LV_PART_MAIN);
     on_error:
       then:
@@ -115,22 +111,14 @@ globals:
     type: bool
     restore_value: no
     initial_value: 'false'
-  - id: boot_ready
-    type: bool
-    restore_value: no
-    initial_value: 'false'
 
 script:
   - id: download_cover
     mode: single
     then:
-      - if:
-          condition:
-            lambda: 'return id(boot_ready);'
-          then:
-            - lambda: lv_obj_set_style_opa(id(img_cover), LV_OPA_0, LV_PART_MAIN);
-            - delay: 1500ms
-            - lambda: id(cover_image).update();
+      - lambda: lv_obj_set_style_opa(id(img_cover), LV_OPA_0, LV_PART_MAIN);
+      - delay: 1500ms
+      - lambda: id(cover_image).update();
 
   - id: activate_preset
     then:

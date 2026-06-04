@@ -40,11 +40,11 @@ logger:
 
 api:
   encryption:
-    key: "MDKSXnre16jxb8Xk7bqsUuzpK0BRIMYRc9SoC9SDu7w="
+    key: !secret api_encryption_key
 
 ota:
   - platform: esphome
-    password: "f7acf6a624eca401240b0b4c95c95885"
+    password: !secret ota_password
 
 wifi:
   ssid: !secret wifi_ssid
@@ -78,7 +78,7 @@ http_request:
 
 online_image:
   - id: cover_image
-    url: "http://homeassistant.local:9000/music/current/cover_480x480_m.jpg?player=38:18:2b:72:85:cc"
+    url: "http://homeassistant.local:9000/music/current/cover_480x480_m.jpg?player=XX:XX:XX:XX:XX:XX"
     format: JPEG
     type: RGB565
     buffer_size: 32768

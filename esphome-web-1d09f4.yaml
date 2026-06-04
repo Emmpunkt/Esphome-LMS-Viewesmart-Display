@@ -26,6 +26,8 @@ esp32:
     type: esp-idf
     sdkconfig_options:
       CONFIG_LCD_RGB_BOUNCE_BUFFER_SIZE: "28800"
+      CONFIG_SPIRAM_FETCH_INSTRUCTIONS: y
+      CONFIG_SPIRAM_RODATA: y
       CONFIG_FREERTOS_USE_TICKLESS_IDLE: "n"
       CONFIG_ESP_MAIN_TASK_STACK_SIZE: "16384"
       CONFIG_LWIP_TCPIP_TASK_STACK_SIZE: "6144"
@@ -76,7 +78,7 @@ http_request:
 
 online_image:
   - id: cover_image
-    url: "http://homeassistant.local:9000/music/current/cover_480x480_m.jpg?player=XX:XX:XX:XX:XX:XX"
+    url: "http://homeassistant.local:9000/music/current/cover_240x240_m.jpg?player=XX:XX:XX:XX:XX:XX"
     format: JPEG
     type: RGB565
     buffer_size: 65536
@@ -87,6 +89,7 @@ online_image:
         - lambda: |-
             auto * dsc = id(cover_image).get_lv_image_dsc();
             lv_image_set_src(id(img_cover), dsc);
+            lv_image_set_inner_align(id(img_cover), LV_IMAGE_ALIGN_CENTER);
             lv_obj_set_style_opa(id(img_cover), LV_OPA_COVER, LV_PART_MAIN);
     on_error:
       then:

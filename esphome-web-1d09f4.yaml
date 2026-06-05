@@ -78,10 +78,10 @@ http_request:
 
 online_image:
   - id: cover_image
-    url: "http://homeassistant.local:9000/music/current/cover_240x240_m.jpg?player=XX:XX:XX:XX:XX:XX"
+    url: "http://homeassistant.local:9000/music/current/cover_480x480_m.jpg?player=XX:XX:XX:XX:XX:XX"
     format: JPEG
     type: RGB565
-    buffer_size: 65536
+    buffer_size: 4096
     update_interval: never
     on_download_finished:
       then:
@@ -89,7 +89,6 @@ online_image:
         - lambda: |-
             auto * dsc = id(cover_image).get_lv_image_dsc();
             lv_image_set_src(id(img_cover), dsc);
-            lv_image_set_inner_align(id(img_cover), LV_IMAGE_ALIGN_CENTER);
             lv_obj_set_style_opa(id(img_cover), LV_OPA_COVER, LV_PART_MAIN);
     on_error:
       then:

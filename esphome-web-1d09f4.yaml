@@ -87,6 +87,7 @@ online_image:
       then:
         - logger.log: "Cover-Art geladen"
         - lambda: |-
+            id(cover_retry_count) = 0;
             auto * dsc = id(cover_image).get_lv_image_dsc();
             lv_image_set_src(id(img_cover), dsc);
             lv_obj_set_style_opa(id(img_cover), LV_OPA_COVER, LV_PART_MAIN);
@@ -94,6 +95,13 @@ online_image:
       then:
         - logger.log: "Cover-Art Download fehlgeschlagen"
         - lambda: lv_obj_set_style_opa(id(img_cover), LV_OPA_0, LV_PART_MAIN);
+        - if:
+            condition:
+              lambda: 'return id(cover_retry_count) < 3;'
+            then:
+              - lambda: id(cover_retry_count) += 1;
+              - delay: 10000ms
+              - lambda: id(cover_image).update();
 
 globals:
   - id: touch_start_x
@@ -112,6 +120,10 @@ globals:
     type: bool
     restore_value: no
     initial_value: 'false'
+  - id: cover_retry_count
+    type: int
+    restore_value: no
+    initial_value: '0'
 
 script:
   - id: download_cover
@@ -387,6 +399,7 @@ text_sensor:
             if (new_title != last_title) {
               lv_label_set_text(id(label_title), new_title.c_str());
               last_title = new_title;
+              id(cover_retry_count) = 0;
               id(download_cover).execute();
             }
 

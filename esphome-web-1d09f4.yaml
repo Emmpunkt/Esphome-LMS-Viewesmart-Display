@@ -1,8 +1,11 @@
 external_components:
-  # Nur der CST826 Touch-Treiber wird extern geladen.
   - source: github://sEbola76/Makerfabs
     components: [cst826]
     refresh: 1h
+  - source:
+      type: local
+      path: components
+    components: [mipi_rgb]
 
 esphome:
   name: touch-knob
@@ -11,14 +14,16 @@ esphome:
     build_flags: "-DBOARD_HAS_PSRAM"
     board_build.arduino.memory_type: qio_opi
   on_boot:
-    priority: -100
-    then:
-      - delay: 1000ms
-      - lambda: |-
-          id(rundes_display).update();
-      - lambda: |-
-          lv_obj_set_style_anim_time(id(label_title),  5000, 0);
-          lv_obj_set_style_anim_time(id(label_artist), 5000, 0);
+    - priority: -100
+      then:
+        - lambda: |-
+            ESP_LOGI("app", "Firmware v5 gestartet. WDT: 30s, PNG-Fallback aktiv.");
+        - delay: 1000ms
+        - lambda: |-
+            id(rundes_display).update();
+        - lambda: |-
+            lv_obj_set_style_anim_time(id(label_title),  5000, 0);
+            lv_obj_set_style_anim_time(id(label_artist), 5000, 0);
 
 esp32:
   board: esp32-s3-devkitc-1
@@ -29,8 +34,9 @@ esp32:
       CONFIG_SPIRAM_FETCH_INSTRUCTIONS: y
       CONFIG_SPIRAM_RODATA: y
       CONFIG_FREERTOS_USE_TICKLESS_IDLE: "n"
-      CONFIG_ESP_MAIN_TASK_STACK_SIZE: "16384"
-      CONFIG_LWIP_TCPIP_TASK_STACK_SIZE: "6144"
+      CONFIG_ESP_MAIN_TASK_STACK_SIZE: "32768"
+      CONFIG_LWIP_TCPIP_TASK_STACK_SIZE: "8192"
+      CONFIG_ESP_TASK_WDT_TIMEOUT_S: "30"
 
 psram:
   mode: octal
@@ -45,6 +51,9 @@ api:
 ota:
   - platform: esphome
     password: !secret ota_password
+
+safe_mode:
+  boot_is_good_after: 15s
 
 wifi:
   ssid: !secret wifi_ssid
@@ -85,15 +94,42 @@ online_image:
     update_interval: never
     on_download_finished:
       then:
-        - logger.log: "Cover-Art geladen"
         - lambda: |-
+            ESP_LOGI("cover", "v5: JPEG geladen. Heap: %u int, %u PSRAM",
+                     heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                     heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
             id(cover_retry_count) = 0;
-            auto * dsc = id(cover_image).get_lv_image_dsc();
-            lv_image_set_src(id(img_cover), dsc);
+            lv_image_set_src(id(img_cover), id(cover_image).get_lv_image_dsc());
             lv_obj_set_style_opa(id(img_cover), LV_OPA_COVER, LV_PART_MAIN);
     on_error:
       then:
-        - logger.log: "Cover-Art Download fehlgeschlagen"
+        - lambda: |-
+            ESP_LOGW("cover", "v5: JPEG fehlgeschlagen, versuche PNG. Heap: %u int, %u PSRAM",
+                     heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                     heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+        - script.execute: download_cover_png
+
+  - id: cover_image_png
+    url: "http://homeassistant.local:9000/music/current/cover_480x480_m.jpg?player=XX:XX:XX:XX:XX:XX"
+    format: PNG
+    type: RGB565
+    buffer_size: 4096
+    update_interval: never
+    on_download_finished:
+      then:
+        - lambda: |-
+            ESP_LOGI("cover", "v5: PNG geladen. Heap: %u int, %u PSRAM",
+                     heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                     heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+            id(cover_retry_count) = 0;
+            lv_image_set_src(id(img_cover), id(cover_image_png).get_lv_image_dsc());
+            lv_obj_set_style_opa(id(img_cover), LV_OPA_COVER, LV_PART_MAIN);
+    on_error:
+      then:
+        - lambda: |-
+            ESP_LOGW("cover", "v5: Auch PNG fehlgeschlagen. Heap: %u int, %u PSRAM",
+                     heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                     heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
         - lambda: lv_obj_set_style_opa(id(img_cover), LV_OPA_0, LV_PART_MAIN);
         - if:
             condition:
@@ -101,7 +137,7 @@ online_image:
             then:
               - lambda: id(cover_retry_count) += 1;
               - delay: 10000ms
-              - lambda: id(cover_image).update();
+              - script.execute: download_cover
 
 globals:
   - id: touch_start_x
@@ -131,7 +167,21 @@ script:
     then:
       - lambda: lv_obj_set_style_opa(id(img_cover), LV_OPA_0, LV_PART_MAIN);
       - delay: 1500ms
+      - lambda: |-
+          ESP_LOGI("cover", "v5: Starte JPEG-Download. Heap: %u int, %u PSRAM",
+                   heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                   heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
       - lambda: id(cover_image).update();
+
+  - id: download_cover_png
+    mode: single
+    then:
+      - delay: 500ms
+      - lambda: |-
+          ESP_LOGI("cover", "v5: Starte PNG-Download. Heap: %u int, %u PSRAM",
+                   heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                   heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+      - lambda: id(cover_image_png).update();
 
   - id: activate_preset
     then:
@@ -196,7 +246,7 @@ lvgl:
     - rundes_display
   bg_color: black
   buffer_size: 100%
-
+  byte_order: little_endian
 
   widgets:
     - image:
